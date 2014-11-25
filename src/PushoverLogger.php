@@ -1,8 +1,8 @@
 <?php
 namespace Logger;
 
-use Logger\Pushover\CurlTransportClient;
-use Logger\Pushover\TransportClient;
+use Logger\PushoverLogger\CurlTransportClient;
+use Logger\PushoverLogger\TransportClient;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 

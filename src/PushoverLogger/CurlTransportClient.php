@@ -1,5 +1,5 @@
 <?php
-namespace Logger\Pushover;
+namespace Logger\PushoverLogger;
 
 class CurlTransportClient implements TransportClient {
 	/**
@@ -9,15 +9,15 @@ class CurlTransportClient implements TransportClient {
 	/**
 	 * @var array
 	 */
-	private $proxy;
+	private $curlOpts;
 
 	/**
 	 * @param string $endpoint
-	 * @param array $proxy
+	 * @param array $curlOpts
 	 */
-	public function __construct($endpoint, array $proxy = array()) {
+	public function __construct($endpoint, array $curlOpts = array()) {
 		$this->endpoint = $endpoint;
-		$this->proxy = $proxy;
+		$this->curlOpts = $curlOpts;
 	}
 
 	/**
@@ -25,73 +25,11 @@ class CurlTransportClient implements TransportClient {
 	 */
 	public function post(array $data) {
 		$ch = curl_init();
-		curl_setopt_array($ch, array(
-			CURLOPT_URL => $this->endpoint,
-			CURLOPT_POSTFIELDS => $data,
-			CURLOPT_RETURNTRANSFER => true
-		));
-		$this->initProxy($ch);
-		curl_exec($ch);
+		$this->curlOpts[CURLOPT_URL] = $this->endpoint;
+		$this->curlOpts[CURLOPT_POSTFIELDS] = $data;
+		$this->curlOpts[CURLOPT_RETURNTRANSFER] = true;
+		curl_setopt_array($ch, $this->curlOpts);
+		$response = curl_exec($ch);
 		curl_close($ch);
-	}
-
-	/**
-	 * @param resource $ch
-	 */
-	private function initProxy($ch) {
-		$proxy = $this->proxy;
-		$proxy = array_merge(array('type' => 'http', 'authtype' => 'basic', 'host' => null, 'port' => null, 'auth' => null), $proxy);
-		if($proxy['host'] === null) {
-			return;
-		}
-		curl_setopt($ch, CURLOPT_PROXYTYPE, $this->getProxyType($proxy['type']));
-		curl_setopt($ch, CURLOPT_HTTPAUTH, $this->getProxyAuthType($proxy['authtype']));
-		if($proxy['host'] !== null && $proxy['port'] !== null) {
-			curl_setopt($ch, CURLOPT_PROXY, "{$proxy['host']}:{$proxy['port']}");
-			curl_setopt($ch, CURLOPT_PROXYPORT, $proxy['port']);
-		}
-		if($proxy['host'] !== null && $proxy['port'] !== null) {
-			curl_setopt($ch, CURLOPT_PROXY, "{$proxy['host']}:{$proxy['port']}");
-			curl_setopt($ch, CURLOPT_PROXYPORT, $proxy['port']);
-		}
-		if($proxy['auth'] !== null) {
-			curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy['auth']);
-		}
-	}
-
-	/**
-	 * @param string $type
-	 * @return int
-	 * @throws \Exception
-	 */
-	private function getProxyType($type) {
-		if($type === 'http') {
-			return CURLPROXY_HTTP;
-		}
-		if($type === 'socks5') {
-			return CURLPROXY_SOCKS5;
-		}
-		throw new \Exception("Proxy type not available: {$type}");
-	}
-
-	/**
-	 * @param string $type
-	 * @return int
-	 * @throws \Exception
-	 */
-	private function getProxyAuthType($type) {
-		if($type === 'basic') {
-			return CURLAUTH_BASIC;
-		}
-		if($type === 'digest') {
-			return CURLAUTH_DIGEST;
-		}
-		if($type === 'gssnegotiate') {
-			return CURLAUTH_GSSNEGOTIATE;
-		}
-		if($type === 'ntlm') {
-			return CURLAUTH_NTLM;
-		}
-		throw new \Exception("Proxy type not available: {$type}");
 	}
 }

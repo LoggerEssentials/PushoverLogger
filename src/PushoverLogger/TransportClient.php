@@ -1,5 +1,5 @@
 <?php
-namespace Logger\Pushover;
+namespace Logger\PushoverLogger;
 
 interface TransportClient {
 	/**
