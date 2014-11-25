@@ -1,6 +1,8 @@
 <?php
 namespace Logger;
 
+use Logger\Pushover\CurlTransportClient;
+use Logger\Pushover\TransportClient;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 
@@ -9,16 +11,25 @@ class PushoverLogger extends AbstractLogger implements Logger {
 	 * @var string[]
 	 */
 	private $parameters = array();
+	/**
+	 * @var TransportClient
+	 */
+	private $transportClient;
 
 	/**
 	 * @param string $user
 	 * @param string $token
 	 * @param array $parameters
+	 * @param TransportClient $transportClient
 	 */
-	public function __construct($user, $token, array $parameters) {
+	public function __construct($user, $token, array $parameters, TransportClient $transportClient = null) {
 		$parameters['token'] = $token;
 		$parameters['user'] = $user;
 		$this->parameters = $parameters;
+		if($transportClient === null) {
+			$transportClient = new CurlTransportClient("https://api.pushover.net/1/messages.json");
+		}
+		$this->transportClient = $transportClient;
 	}
 
 
@@ -27,7 +38,7 @@ class PushoverLogger extends AbstractLogger implements Logger {
 	 * @param string $level
 	 * @param string $message
 	 * @param array $context
-	 * @return $this
+	 * @return void
 	 */
 	public function log($level, $message, array $context = array()) {
 		try {
@@ -41,21 +52,16 @@ class PushoverLogger extends AbstractLogger implements Logger {
 			$this->push($parameters);
 		} catch (\Exception $e) {
 		}
-		return $this;
 	}
 
 	/**
 	 * @param string[] $parameters
 	 */
 	private function push($parameters) {
-		$ch = curl_init();
-		curl_setopt_array($ch, array(
-			CURLOPT_URL => "https://api.pushover.net/1/messages.json",
-			CURLOPT_POSTFIELDS => $parameters,
-			CURLOPT_RETURNTRANSFER => true
-		));
-		curl_exec($ch);
-		curl_close($ch);
+		try {
+			$this->transportClient->post($parameters);
+		} catch(\Exception $e) {
+		}
 	}
 
 	/**
