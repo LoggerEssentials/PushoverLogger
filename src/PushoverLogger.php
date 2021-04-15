@@ -6,14 +6,10 @@ use Logger\PushoverLogger\TransportClient;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 
-class PushoverLogger extends AbstractLogger implements Logger {
-	/**
-	 * @var string[]
-	 */
+class PushoverLogger extends AbstractLogger {
+	/** @var string[] */
 	private $parameters = array();
-	/**
-	 * @var TransportClient
-	 */
+	/** @var TransportClient */
 	private $transportClient;
 
 	/**
@@ -71,12 +67,9 @@ class PushoverLogger extends AbstractLogger implements Logger {
 	private function convertLevelToPriority($level) {
 		switch ($level) {
 			case LogLevel::EMERGENCY:
-			case LogLevel::ALERT:
-				return 2;
-			case LogLevel::CRITICAL:
-				return 1;
-			case LogLevel::ERROR:
-				return 0;
+			case LogLevel::ALERT: return 2;
+			case LogLevel::CRITICAL: return 1;
+			case LogLevel::ERROR: return 0;
 		}
 		return -1;
 	}
