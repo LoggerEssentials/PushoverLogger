@@ -28,7 +28,9 @@
 		}
 	},
 	"suggest": {
-		"logger/essentials": "Advanced logging component library"
+		"logger/essentials": "Advanced logging component library",
+		"psr/http-client": "Use PSR-18 transport (Psr18TransportClient)",
+		"psr/http-factory": "PSR-17 factories required by PSR-18 transport"
 	},
 	"scripts": {
 		"phpstan": "phpstan analyze -c phpstan.neon",
