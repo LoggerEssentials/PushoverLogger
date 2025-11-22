@@ -2,11 +2,17 @@
 
 namespace Logger;
 
+use Logger\Common\AbstractLoggerAware;
 use Logger\PushoverLogger\CurlTransportClient;
 use Logger\PushoverLogger\TransportClient;
 use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 
+/**
+ * @phpstan-import-type TLogLevel from AbstractLoggerAware
+ * @phpstan-import-type TLogMessage from AbstractLoggerAware
+ * @phpstan-import-type TLogContext from AbstractLoggerAware
+ */
 class PushoverLogger extends AbstractLogger {
 	/** @var array<string, scalar|null> */
 	private array $parameters;
@@ -30,11 +36,11 @@ class PushoverLogger extends AbstractLogger {
 	/**
 	 * Logs with an arbitrary level.
 	 *
-	 * @param mixed $level
-	 * @param string|\Stringable $message
-	 * @param array<string, mixed> $context
+	 * @param TLogLevel $level
+	 * @param TLogMessage $message
+	 * @param TLogContext $context
 	 */
-	public function log($level, $message, array $context = []) {
+	public function log($level, $message, array $context = []): void {
 		try {
 			$parameters = $this->parameters;
 			$parameters['priority'] = $this->convertLevelToPriority((string) $level);
