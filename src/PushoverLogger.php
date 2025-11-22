@@ -1,4 +1,5 @@
 <?php
+
 namespace Logger;
 
 use Logger\PushoverLogger\CurlTransportClient;
@@ -7,10 +8,9 @@ use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 
 class PushoverLogger extends AbstractLogger {
-	/** @var string[] */
-	private $parameters = array();
-	/** @var TransportClient */
-	private $transportClient;
+	/** @var array<string, null|scalar> */
+	private array $parameters;
+	private TransportClient $transportClient;
 
 	/**
 	 * @param string $user
@@ -18,7 +18,7 @@ class PushoverLogger extends AbstractLogger {
 	 * @param array $parameters
 	 * @param TransportClient $transportClient
 	 */
-	public function __construct($user, $token, array $parameters, TransportClient $transportClient = null) {
+	public function __construct($user, $token, array $parameters, ?TransportClient $transportClient = null) {
 		$parameters['token'] = $token;
 		$parameters['user'] = $user;
 		$this->parameters = $parameters;
@@ -31,22 +31,24 @@ class PushoverLogger extends AbstractLogger {
 
 	/**
 	 * Logs with an arbitrary level.
+	 *
 	 * @param string $level
 	 * @param string $message
 	 * @param array $context
 	 * @return void
 	 */
-	public function log($level, $message, array $context = array()) {
+	public function log($level, $message, array $context = []) {
 		try {
 			$parameters = $this->parameters;
 			$parameters['priority'] = $this->convertLevelToPriority($level);
-			if($parameters['priority']) {
+			// Only emergency priority (2) requires retry/expire according to Pushover API
+			if($parameters['priority'] === 2) {
 				$parameters['expire'] = 3600;
 				$parameters['retry'] = 120;
 			}
 			$parameters['message'] = $message;
 			$this->push($parameters);
-		} catch (\Exception $e) {
+		} catch(\Throwable $e) {
 		}
 	}
 
@@ -56,7 +58,7 @@ class PushoverLogger extends AbstractLogger {
 	private function push($parameters) {
 		try {
 			$this->transportClient->post($parameters);
-		} catch(\Exception $e) {
+		} catch(\Throwable $e) {
 		}
 	}
 
@@ -65,12 +67,11 @@ class PushoverLogger extends AbstractLogger {
 	 * @return int
 	 */
 	private function convertLevelToPriority($level) {
-		switch ($level) {
-			case LogLevel::EMERGENCY:
-			case LogLevel::ALERT: return 2;
-			case LogLevel::CRITICAL: return 1;
-			case LogLevel::ERROR: return 0;
-		}
-		return -1;
+		return match ($level) {
+			LogLevel::EMERGENCY, LogLevel::ALERT => 2,
+			LogLevel::CRITICAL => 1,
+			LogLevel::ERROR => 0,
+			default => -1,
+		};
 	}
 }
