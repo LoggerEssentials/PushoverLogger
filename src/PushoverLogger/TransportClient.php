@@ -3,8 +3,7 @@ namespace Logger\PushoverLogger;
 
 interface TransportClient {
 	/**
-	 * @param array $data
-	 * @return void
+	 * @param array<string, scalar|null> $data
 	 */
-	public function post(array $data);
+	public function post(array $data): void;
 }

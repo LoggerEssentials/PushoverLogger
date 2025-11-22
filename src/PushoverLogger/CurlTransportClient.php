@@ -2,34 +2,31 @@
 namespace Logger\PushoverLogger;
 
 class CurlTransportClient implements TransportClient {
-	/**
-	 * @var string
-	 */
-	private $endpoint;
-	/**
-	 * @var array
-	 */
-	private $curlOpts;
+	private string $endpoint;
+	/** @var array<int, mixed> */
+	private array $curlOpts;
 
 	/**
-	 * @param string $endpoint
-	 * @param array $curlOpts
+	 * @param array<int, mixed> $curlOpts
 	 */
-	public function __construct($endpoint, array $curlOpts = array()) {
+	public function __construct(string $endpoint, array $curlOpts = []) {
 		$this->endpoint = $endpoint;
 		$this->curlOpts = $curlOpts;
 	}
 
 	/**
-	 * @param array $data
+	 * @param array<string, scalar|null> $data
 	 */
-	public function post(array $data) {
+	public function post(array $data): void {
 		$ch = curl_init();
+		if ($ch === false) {
+			return;
+		}
 		$this->curlOpts[CURLOPT_URL] = $this->endpoint;
 		$this->curlOpts[CURLOPT_POSTFIELDS] = $data;
 		$this->curlOpts[CURLOPT_RETURNTRANSFER] = true;
 		curl_setopt_array($ch, $this->curlOpts);
-		$response = curl_exec($ch);
+		curl_exec($ch);
 		curl_close($ch);
 	}
 }

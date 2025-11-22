@@ -8,17 +8,15 @@ use Psr\Log\AbstractLogger;
 use Psr\Log\LogLevel;
 
 class PushoverLogger extends AbstractLogger {
-	/** @var array<string, null|scalar> */
+	/** @var array<string, scalar|null> */
 	private array $parameters;
 	private TransportClient $transportClient;
 
 	/**
-	 * @param string $user
-	 * @param string $token
-	 * @param array $parameters
-	 * @param TransportClient $transportClient
+	 * @param array<string, scalar|null> $parameters
 	 */
-	public function __construct($user, $token, array $parameters, ?TransportClient $transportClient = null) {
+	public function __construct(string $user, string $token, array $parameters, ?TransportClient $transportClient = null) {
+		/** @var array<string, scalar|null> $parameters */
 		$parameters['token'] = $token;
 		$parameters['user'] = $user;
 		$this->parameters = $parameters;
@@ -32,41 +30,36 @@ class PushoverLogger extends AbstractLogger {
 	/**
 	 * Logs with an arbitrary level.
 	 *
-	 * @param string $level
-	 * @param string $message
-	 * @param array $context
-	 * @return void
+	 * @param mixed $level
+	 * @param string|\Stringable $message
+	 * @param array<string, mixed> $context
 	 */
 	public function log($level, $message, array $context = []) {
 		try {
 			$parameters = $this->parameters;
-			$parameters['priority'] = $this->convertLevelToPriority($level);
+			$parameters['priority'] = $this->convertLevelToPriority((string) $level);
 			// Only emergency priority (2) requires retry/expire according to Pushover API
 			if($parameters['priority'] === 2) {
 				$parameters['expire'] = 3600;
 				$parameters['retry'] = 120;
 			}
-			$parameters['message'] = $message;
+			$parameters['message'] = (string) $message;
 			$this->push($parameters);
 		} catch(\Throwable $e) {
 		}
 	}
 
 	/**
-	 * @param string[] $parameters
+	 * @param array<string, scalar|null> $parameters
 	 */
-	private function push($parameters) {
+	private function push(array $parameters): void {
 		try {
 			$this->transportClient->post($parameters);
 		} catch(\Throwable $e) {
 		}
 	}
 
-	/**
-	 * @param string $level
-	 * @return int
-	 */
-	private function convertLevelToPriority($level) {
+	private function convertLevelToPriority(string $level): int {
 		return match ($level) {
 			LogLevel::EMERGENCY, LogLevel::ALERT => 2,
 			LogLevel::CRITICAL => 1,
